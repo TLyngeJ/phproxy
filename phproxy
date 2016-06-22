@@ -1,3 +1,27 @@
 #!/usr/bin/env php
 <?php
 
+require 'vendor/autoload.php';
+
+use phproxy\Core\Bootstrap;
+use React\EventLoop\Factory;
+use React\Socket\Server;
+use React\Http\Request as ReactRequest;
+use React\Http\Response as ReactResponse;
+use React\Http\Server as HTTPServer;
+
+$app = function (ReactRequest $request, ReactResponse $response) {
+  $proxy = new Bootstrap($request, $response);
+  $proxy->handle();
+  $proxy->response();
+};
+
+$loop = Factory::create();
+$socket = new Server($loop);
+$http = new HTTPServer($socket, $loop);
+
+$http->on('request', $app);
+echo "Server running at http://127.0.0.1:8080\n";
+
+$socket->listen(8080);
+$loop->run();
